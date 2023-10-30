@@ -2,14 +2,13 @@
 
 # Store the original working directory
 original_directory=$(pwd)
-output=$original_directory/output/everything.txt
+output_directory=$original_directory/output
+output=$output_directory/everything.txt
 
 # Clear the output file
 cat /dev/null > "$output"
 
 while read line; do
-    # Extract the value of the "res" variable from the 'formKey' pattern in the line
-    res=$(echo "$line" | grep -oP '(?<=formKey="embedded:app:forms/).*')
 
     # Use the full path to the "forms" directory
     forms_directory="$original_directory/src/main/webapp/forms/"
@@ -18,12 +17,9 @@ while read line; do
     cd "$forms_directory" || (echo "Error: Directory '$forms_directory' not found." && exit 1)
 
     # Use the "find" command to locate files that match the specified pattern
-    find . -type f -name "$res" -printf '%P\n' | while read file; do
+    find . -type f -name "$line" -printf '%P\n' | while read file; do
         echo "Reading file: $file"
         cat "$file" | grep -oP '(?<=cam-variable-name=").*?(?=")' | grep -v 'readonly' | while read variables; do
-            # Create the output directory if it doesn't exist
-            mkdir -p "$original_directory/output"
-            chmod 777 "$original_directory/output"
             
             # Create the output file and append data to it
             touch "$output"
@@ -38,4 +34,4 @@ while read line; do
     # Restore the working directory for the next iteration
     cd "$original_directory" || (echo "Error: Failed to return to the original directory." && exit 1)
 
-done < forms.txt
+done < "$output_directory/html-forms.txt"
